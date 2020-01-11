@@ -1,23 +1,48 @@
+import numpy as np
 from os import path
+import gc
+import re
+from collections import Counter, OrderedDict, namedtuple
+from config import parameters
 
 class Quantizer:
-    def __init__(self, tokens, data_dir, batch_size, seq_length, max_word_l, n_words, n_chars):
-        self.n_words = n_words
-        self.n_chars = n_chars
-        train_file = path.join(data_dir, 'train.txt')
-        valid_file = path.join(data_dir, 'valid.txt')
-        test_file = path.join(data_dir, 'test.txt')
-        input_files = [train_file, valid_file, test_file]
-        vocab_file = path.join(data_dir, 'vocab.npz')
-        tensor_file = path.join(data_dir, 'data')
-        char_file = path.join(data_dir, 'data_char')
-
+    def __init__(self, whole_sentences):
+        self.tokens = self.tokens()
+        self.batch_size = parameters.batch_size
+        self.seq_length = parameters.seq_length
+        self.max_word_l = parameters.max_word_l
+        self.n_words = parameters.n_words
+        self.n_chars = parameters.n_chars
+        input_objects = [whole_sentences, whole_sentences, whole_sentences]
+        vocab_file = parameters.vocab_filepath
+        tensor_file = parameters.tensor_filepath
+        char_file = parameters.char_filepath
+        
+    def tokens(self):
+        Tokens = namedtuple('Tokens', ['EOS', 'UNK', 'START', 'END', 'ZEROPAD'])
+        tokens = Tokens(
+                EOS='`',
+                UNK='|',    # unk word token
+                START='{',  # start-of-word token
+                END='}',    # end-of-word token
+                ZEROPAD=' ' # zero-pad token
+            )
+        return tokens
+        
     # construct a tensor with all the data
     if not (path.exists(vocab_file) or path.exists(tensor_file) or path.exists(char_file)):
-        print('one-time setup: preprocessing input train/valid/test files in dir:', data_dir)
-        self.text_to_tensor(tokens, input_files, vocab_file, tensor_file, char_file, max_word_l)
-
-    def text_to_tensor(self, tokens, input_files, out_vocabfile, out_tensorfile, out_charfile, max_word_l):
+        print('one-time setup: preprocessing input train/valid/test files in dir:', parameters.output_base_dir)
+        self.text_to_tensor(self.tokens, input_objects, vocab_file, tensor_file, char_file, self.max_word_l)
+    
+    def word2jamo(self, word):
+        l = [hangul.split_jamo(char) for char in word]
+        sum(l, [])
+        jamo_list = list()
+        for jamo in sum(l,[]):
+            jamo_list.extend(jamo)
+        return jamo_list
+    
+    def text_to_tensor(self, tokens, input_objects, out_vocabfile, out_tensorfile, out_charfile, max_word_l):
         print('Processing text into tensors...')
         max_word_l_tmp = 0 # max word length of the corpus
         idx2word = [tokens.UNK] # unknown word token
@@ -47,11 +72,10 @@ class Quantizer:
                 else:
                     wordcount.update([word])
                 word = word.replace(tokens.UNK, '')
-                charcount.update(word)
+                charcount.update(self.word2jamo(word))
 
-            f = codecs.open(input_files[split], 'r', encoding)
             counts = 0
-            for line in f:
+            for line in input_objects[split]:
                 line = line.replace('<unk>', tokens.UNK)  # replace unk with a single character
                 line = line.replace(tokens.START, '')  # start-of-word token is reserved
                 line = line.replace(tokens.END, '')  # end-of-word token is reserved
@@ -63,7 +87,6 @@ class Quantizer:
                 if tokens.EOS != '':
                     update(tokens.EOS)
                     counts += 1 # PTB uses \n for <eos>, so need to add one more token at the end
-            f.close()
             split_counts.append(counts)
 
         print('Most frequent words:', len(wordcount))
@@ -103,7 +126,7 @@ class Quantizer:
                     output_tensor[word_num] = word2idx[tokens.UNK]
                 else:
                     output_tensor[word_num] = word2idx[word] if word in word2idx else word2idx[tokens.UNK]
-                chars += [char2idx[char] for char in word if char in char2idx]
+                chars += [char2idx[char] for char in self.word2jamo(word) if char in char2idx]
                 chars.append(char2idx[tokens.END]) # end-of-word symbol
                 if len(chars) >= max_word_l:
                     chars[max_word_l-1] = char2idx[tokens.END]
@@ -112,9 +135,8 @@ class Quantizer:
                     output_chars[word_num, :len(chars)] = chars
                 return word_num + 1
 
-            f = codecs.open(input_files[split], 'r', encoding)
             word_num = 0
-            for line in f:
+            for line in input_objects[split]:
                 line = line.replace('<unk>', tokens.UNK)  # replace unk with a single character
                 line = line.replace(tokens.START, '')  # start-of-word token is reserved
                 line = line.replace(tokens.END, '')  # end-of-word token is reserved
@@ -123,7 +145,6 @@ class Quantizer:
                     word_num = append(rword, word_num)
                 if tokens.EOS != '':   # PTB does not have <eos> so we add a character for <eos> tokens
                     word_num = append(tokens.EOS, word_num)   # other datasets don't need this
-            f.close()
             tensorfile_split = "{}_{}.npy".format(out_tensorfile, split)
             print('saving', tensorfile_split)
             np.save(tensorfile_split, output_tensor)
