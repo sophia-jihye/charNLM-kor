@@ -1,4 +1,5 @@
 from Preprocessor import Preprocessor
+from Quantizer import Quantizer
 from config import parameters
 from utils import *
 import pandas as pd
@@ -42,6 +43,8 @@ def main():
     preprocessor = Preprocessor()
     df = raw2preprocessed(preprocessor, df)
     whole_sentences = for_train(preprocessor, df)
+    
+    loader = Quantizer(whole_sentences)
     
 if __name__ == '__main__':
     main()
