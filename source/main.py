@@ -1,6 +1,6 @@
 from Preprocessor import Preprocessor
 from Quantizer import Quantizer
-from model.LSTMCNN import LSTMCNN, load_model
+from LSTMCNN import LSTMCNN, load_model
 from config import parameters
 from utils import *
 import pandas as pd
@@ -25,7 +25,6 @@ batch_size = parameters.batch_size
 seq_length = parameters.seq_length
 batch_norm = parameters.batch_norm
 highway_layers = parameters.highway_layers
-num_layers = parameters.num_layers
 rnn_size = parameters.rnn_size
 dropout = parameters.dropout
 learning_rate = parameters.learning_rate
@@ -81,6 +80,8 @@ def main():
         
     pickle.dump(parameters, open(model_param_pkl_filepath, "wb"))
     model.save(model_json_filepath)
+    
+    Train, Validation, Test = 0, 1, 2
     model.fit_generator(loader.next_batch(Train), loader.split_sizes[Train], max_epochs,
                         loader.next_batch(Validation), loader.split_sizes[Validation], decay_when, learning_rate_decay, save_every, save_epoch_file)
     model.save_weights(model_weights_h5_filepath, overwrite=True)

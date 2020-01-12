@@ -4,6 +4,7 @@ import gc
 import re
 from collections import Counter, OrderedDict, namedtuple
 from config import parameters
+import hangul
 
 class Quantizer:
     def __init__(self, whole_sentences):
@@ -34,7 +35,7 @@ class Quantizer:
         
         print('reshaping tensors...')
         self.batch_idx = [0,0,0]
-        self.data_sizes, self.split_sizes, self.all_batches = self.reshape_tensors(all_data)
+        self.data_sizes, self.split_sizes, self.all_batches = self.reshape_tensors(all_data, all_data_char, self.batch_size, self.seq_length)
 
         print('data load done. Number of batches in train: %d, val: %d, test: %d'
               % (self.split_sizes[0], self.split_sizes[1], self.split_sizes[2]))
@@ -52,7 +53,7 @@ class Quantizer:
         return tokens
     
     def vocab_unpack(self, vocab_filepath):
-        vocab_mapping = np.load(vocab_filepath)
+        vocab = np.load(vocab_filepath)
         return vocab['idx2word'], vocab['word2idx'], vocab['idx2char'], vocab['char2idx']
     
     def load_tensor_data(self, tensor_file, char_file):
@@ -63,7 +64,7 @@ class Quantizer:
             all_data_char.append(np.load("{}_{}.npy".format(char_file, split)))  # train, valid, test character indices
         return all_data, all_data_char
     
-    def reshape_tensors(self, all_data):
+    def reshape_tensors(self, all_data, all_data_char, batch_size, seq_length):
         data_sizes = []
         split_sizes = []
         all_batches = []
@@ -173,7 +174,7 @@ class Quantizer:
 
         print('Char counts:')
         for ii, cc in enumerate(charcount.most_common()):
-            print(ii, cc[0].encode(encoding), cc[1])
+            print(ii, cc[0].encode('utf8'), cc[1])
 
         print('After first pass of data, max word length is:', max_word_l_tmp)
         print('Token count: train %d, val %d, test %d' % (split_counts[0], split_counts[1], split_counts[2]))
