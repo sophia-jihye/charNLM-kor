@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser(description='Train a word+character-level langu
 parser.add_argument('--batch_size', type=int, default=20, help='number of sequences to train on in parallel')
 parser.add_argument('--seq_length', type=int, default=35, help='number of timesteps to unroll for')
 parser.add_argument('--max_word_l', type=int, default=100, help='maximum word length')
-parser.add_argument('--n_words', type=int, default=30000, help='max number of words in model')
+parser.add_argument('--n_words', type=int, default=1800000, help='max number of words in model')
 parser.add_argument('--n_chars', type=int, default=100, help='max number of char in model')
 parser.add_argument('--char_vec_size', type=int, default=15, help='dimensionality of character embeddings')
 parser.add_argument('--feature_maps', type=int, nargs='+', default=[50,100,150,200,200,200,200], help='number of feature maps in the CNN')
