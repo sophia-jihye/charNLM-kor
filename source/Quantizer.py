@@ -13,7 +13,7 @@ class Quantizer:
         self.seq_length = parameters.seq_length
         self.n_words = parameters.n_words
         self.n_chars = parameters.n_chars
-        input_objects = [whole_sentences, whole_sentences, whole_sentences]
+        input_objects = [whole_sentences, whole_sentences[:100], whole_sentences[100:200]]
         vocab_filepath = parameters.vocab_filepath
         tensor_file = parameters.tensor_file
         char_file = parameters.char_file
