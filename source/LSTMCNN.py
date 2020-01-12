@@ -164,7 +164,7 @@ class sSGD(SGD):
         return grads
 
 class sModel(Model):
-    def fit_generator(self, generator, steps_per_epoch, epochs, validation_data, validation_steps, opt):
+    def fit_generator(self, generator, steps_per_epoch, epochs, validation_data, validation_steps, decay_when, learning_rate_decay, save_every, save_epoch_file):
         val_losses = []
         lr = K.get_value(self.optimizer.lr)
         for epoch in range(epochs):
@@ -172,11 +172,11 @@ class sModel(Model):
             val_loss = exp(self.evaluate_generator(validation_data, validation_steps))
             val_losses.append(val_loss)
             print('Epoch {}/{}. Validation perplexity: {}'.format(epoch + 1, epochs, val_loss))
-            if len(val_losses) > 2 and (val_losses[-2] - val_losses[-1]) < opt.decay_when:
-                lr *= opt.learning_rate_decay
+            if len(val_losses) > 2 and (val_losses[-2] - val_losses[-1]) < decay_when:
+                lr *= learning_rate_decay
                 K.set_value(self.optimizer.lr, lr)
-            if epoch == epochs-1 or epoch % opt.save_every == 0:
-                savefile = '%s/lm_%s_epoch%d_%.2f.h5' % (opt.checkpoint_dir, opt.savefile, epoch + 1, val_loss)
+            if epoch == epochs-1 or epoch % save_every == 0:
+                savefile = '%s%d_%.2f.h5' % (save_epoch_file, epoch + 1, val_loss)
                 self.save_weights(savefile)
     @property
     def state_updates_value(self):
@@ -211,10 +211,10 @@ def CNN(seq_length, length, feature_maps, kernels, x):
     x = Reshape((seq_length, sum(feature_maps)))(x)
     return x
 
-def LSTMCNN(batch_norm, highway_layers, num_layers, rnn_size, dropout, word_vocab_size, learning_rate, max_grad_norm, seq_length):
-    chars = Input(batch_shape=(opt.batch_size, opt.seq_length, opt.max_word_l), name='chars')
-    chars_embedding = Embedding(opt.char_vocab_size, opt.char_vec_size, name='chars_embedding')(chars)
-    cnn = CNN(opt.seq_length, opt.max_word_l, opt.feature_maps, opt.kernels, chars_embedding)
+def LSTMCNN(char_vocab_size, char_vec_size, feature_maps, kernels, batch_size, seq_length, max_word_l, batch_norm, highway_layers, num_layers, rnn_size, dropout, word_vocab_size, learning_rate, max_grad_norm):
+    chars = Input(batch_shape=(batch_size, seq_length, max_word_l), name='chars')
+    chars_embedding = Embedding(char_vocab_size, char_vec_size, name='chars_embedding')(chars)
+    cnn = CNN(seq_length, max_word_l, feature_maps, kernels, chars_embedding)
     x = cnn
     inputs = chars
     

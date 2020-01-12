@@ -10,19 +10,36 @@ class Quantizer:
         self.tokens = self.tokens()
         self.batch_size = parameters.batch_size
         self.seq_length = parameters.seq_length
-        self.max_word_l = parameters.max_word_l
         self.n_words = parameters.n_words
         self.n_chars = parameters.n_chars
         input_objects = [whole_sentences, whole_sentences, whole_sentences]
         vocab_filepath = parameters.vocab_filepath
         tensor_file = parameters.tensor_file
         char_file = parameters.char_file
+        initial_max_word_l = parameters.max_word_l
         
         # construct a tensor with all the data
         if not (path.exists(vocab_filepath) or path.exists(tensor_file) or path.exists(char_file)):
             print('one-time setup: preprocessing input train/valid/test files in dir:', parameters.output_base_dir)
-            self.text_to_tensor(self.tokens, input_objects, vocab_filepath, tensor_file, char_file, self.max_word_l)
+            self.text_to_tensor(self.tokens, input_objects, vocab_filepath, tensor_file, char_file, initial_max_word_l)
         
+        self.idx2word, self.word2idx, self.idx2char, self.char2idx = self.vocab_unpack(vocab_filepath)
+        self.vocab_size = len(self.idx2word)
+        self.word_vocab_size = len(self.idx2word)
+        print('Word vocab size: %d, Char vocab size: %d' % (len(self.idx2word), len(self.idx2char)))
+        
+        print('loading data files...')
+        all_data, all_data_char = self.load_tensor_data(tensor_file, char_file)
+        self.max_word_l = all_data_char[0].shape[1]   # create word-char mappings
+        
+        print('reshaping tensors...')
+        self.batch_idx = [0,0,0]
+        self.data_sizes, self.split_sizes, self.all_batches = self.reshape_tensors(all_data)
+
+        print('data load done. Number of batches in train: %d, val: %d, test: %d'
+              % (self.split_sizes[0], self.split_sizes[1], self.split_sizes[2]))
+        gc.collect()
+            
     def tokens(self):
         Tokens = namedtuple('Tokens', ['EOS', 'UNK', 'START', 'END', 'ZEROPAD'])
         tokens = Tokens(
@@ -33,6 +50,57 @@ class Quantizer:
                 ZEROPAD=' ' # zero-pad token
             )
         return tokens
+    
+    def vocab_unpack(self, vocab_filepath):
+        vocab_mapping = np.load(vocab_filepath)
+        return vocab['idx2word'], vocab['word2idx'], vocab['idx2char'], vocab['char2idx']
+    
+    def load_tensor_data(self, tensor_file, char_file):
+        all_data = []
+        all_data_char = []
+        for split in range(3):
+            all_data.append(np.load("{}_{}.npy".format(tensor_file, split)))  # train, valid, test tensors
+            all_data_char.append(np.load("{}_{}.npy".format(char_file, split)))  # train, valid, test character indices
+        return all_data, all_data_char
+    
+    def reshape_tensors(self, all_data):
+        data_sizes = []
+        split_sizes = []
+        all_batches = []
+        for split, data in enumerate(all_data):
+            data_len = data.shape[0]
+            data_sizes.append(data_len)
+            if split < 2 and data_len % (batch_size * seq_length) != 0:
+                data = data[:batch_size * seq_length * (data_len // (batch_size * seq_length))]
+            ydata = data.copy()
+            ydata[0:-1] = data[1:]
+            ydata[-1] = data[0]
+            data_char = all_data_char[split][:len(data)]
+            if split < 2:
+                rdata = data.reshape((batch_size, -1))
+                rydata = ydata.reshape((batch_size, -1))
+                rdata_char = data_char.reshape((batch_size, -1, self.max_word_l))
+            else: # for test we repeat dimensions to batch size (easier but inefficient evaluation)
+                nseq = (data_len + (seq_length - 1)) // seq_length
+                rdata = data.copy()
+                rdata.resize((1, nseq*seq_length))
+                rdata = np.tile(rdata, (batch_size, 1))
+                rydata = ydata.copy()
+                rydata.resize((1, nseq*seq_length))
+                rydata = np.tile(rydata, (batch_size, 1))
+                rdata_char = data_char.copy()
+                rdata_char.resize((1, nseq*seq_length, rdata_char.shape[1]))
+                rdata_char = np.tile(rdata_char, (batch_size, 1, 1))
+            # split in batches
+            x_batches = np.split(rdata, rdata.shape[1] // seq_length, axis=1)
+            y_batches = np.split(rydata, rydata.shape[1] // seq_length, axis=1)
+            x_char_batches = np.split(rdata_char, rdata_char.shape[1] // seq_length, axis=1)
+            nbatches = len(x_batches)
+            split_sizes.append(nbatches)
+            assert len(x_batches) == len(y_batches)
+            assert len(x_batches) == len(x_char_batches)
+            all_batches.append((x_batches, y_batches, x_char_batches))
+        return data_sizes, split_sizes, all_batches
     
     def word2jamo(self, word):
         l = [hangul.split_jamo(char) for char in word]
@@ -155,3 +223,20 @@ class Quantizer:
         # save output preprocessed files
         print('saving', out_vocabfile)
         np.savez(out_vocabfile, idx2word=idx2word, word2idx=word2idx, idx2char=idx2char, char2idx=char2idx)
+        
+    def next_batch(self, split_idx):
+        while True:
+            # split_idx is integer: 0 = train, 1 = val, 2 = test
+            self.batch_idx[split_idx] += 1
+            if self.batch_idx[split_idx] >= self.split_sizes[split_idx]:
+                self.batch_idx[split_idx] = 0 # cycle around to beginning
+
+            # pull out the correct next batch
+            idx = self.batch_idx[split_idx]
+            word = self.all_batches[split_idx][0][idx]
+            sparse_ydata = self.all_batches[split_idx][1][idx]
+            chars = self.all_batches[split_idx][2][idx]
+            # expand dims for sparse_cross_entropy optimization
+            ydata = np.expand_dims(sparse_ydata, axis=2)
+
+            yield ({'word':word, 'chars':chars}, ydata)
