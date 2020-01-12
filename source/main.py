@@ -1,5 +1,6 @@
 from Preprocessor import Preprocessor
 from Quantizer import Quantizer
+from model.LSTMCNN import LSTMCNN, load_model
 from config import parameters
 from utils import *
 import pandas as pd
@@ -45,6 +46,20 @@ def main():
     whole_sentences = for_train(preprocessor, df)
     
     loader = Quantizer(whole_sentences)
+    word_vocab_size = min(parameters.n_words, len(loader.idx2word))
+    char_vocab_size = min(parameters.n_chars, len(loader.idx2char))
+    max_word_l = loader.max_word_l
+    print('Word vocab size: %d, Char vocab size: %d, Max word length (incl. padding): %d' % (word_vocab_size, char_vocab_size, max_word_l))
+
+    print('creating an LSTM-CNN with', parameters.num_layers, 'layers')
+    model = LSTMCNN(parameters.batch_norm, parameters.highway_layers, parameters.num_layers, parameters.rnn_size, parameters.dropout, word_vocab_size, parameters.learning_rate, parameters.max_grad_norm, parameters.seq_length)
+        
+    pickle.dump(parameters, open(parameters.param_pkl_filepath, "wb"))
+    model.save(parameters.model_json_filepath)
+    model.fit_generator(loader.next_batch(Train), loader.split_sizes[Train], opt.max_epochs,
+                        loader.next_batch(Validation), loader.split_sizes[Validation], opt)
+    model.save_weights(parameters.model_weights_h5_filepath, overwrite=True)
+    
     
 if __name__ == '__main__':
     main()

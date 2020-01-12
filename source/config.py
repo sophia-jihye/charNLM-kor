@@ -8,6 +8,15 @@ parser.add_argument('--seq_length', type=int, default=35, help='number of timest
 parser.add_argument('--max_word_l', type=int, default=65, help='maximum word length')
 parser.add_argument('--n_words', type=int, default=30000, help='max number of words in model')
 parser.add_argument('--n_chars', type=int, default=100, help='max number of char in model')
+parser.add_argument('--num_layers', type=int, default=2, help='number of layers in the LSTM')
+parser.add_argument('--batch_norm', type=int, default=0, help='use batch normalization over input embeddings (1=yes)')
+parser.add_argument('--highway_layers', type=int, default=2, help='number of highway layers')
+parser.add_argument('--num_layers', type=int, default=2, help='number of layers in the LSTM')
+parser.add_argument('--rnn_size', type=int, default=650, help='size of LSTM internal state')
+parser.add_argument('--dropout', type=float, default=0.5, help='dropout. 0 = no dropout')
+parser.add_argument('--learning_rate', type=float, default=1, help='starting learning rate')
+parser.add_argument('--max_grad_norm', type=float, default=5, help='normalize gradients at')
+parser.add_argument('--seq_length', type=int, default=35, help='number of timesteps to unroll for')
 args = parser.parse_args()
 
 # User configuration
@@ -27,9 +36,12 @@ create_dirs([output_base_dir])
 kci_korean_json_filepath = os.path.join(data_dir, 'kci_korean_sentences_510_191230.json')
 preprocessed_json_filepath = os.path.join(output_base_dir, ('%s_preprocessed.json' % now_time_str()))
 whole_sentences_txt_filepath = os.path.join(output_base_dir, ('%s_whole_sentences.txt' % now_time_str()))
-vocab_filepath = os.path.join(parameters.output_base_dir, ('%s_vocab.npz' % now_time_str()))
-tensor_filepath = os.path.join(parameters.output_base_dir, ('%s_data' % now_time_str()))
-char_filepath = os.path.join(parameters.output_base_dir, ('%s_data_char' % now_time_str()))
+vocab_filepath = os.path.join(output_base_dir, ('%s_vocab.npz' % now_time_str()))
+tensor_file = os.path.join(output_base_dir, ('%s_data' % now_time_str()))
+char_file = os.path.join(output_base_dir, ('%s_data_char' % now_time_str()))
+param_pkl_filepath = os.path.join(output_base_dir, ('%s_param.pkl' % now_time_str()))
+model_json_filepath = os.path.join(output_base_dir, ('%s_model.json' % now_time_str()))
+model_weights_h5_filepath = os.path.join(output_base_dir, ('%s_model_weights.h5' % now_time_str()))
 
 class Parameters:
     def __init__(self):
@@ -38,6 +50,15 @@ class Parameters:
         self.max_word_l = args.max_word_l
         self.n_words = args.n_words
         self.n_chars = args.n_chars
+        self.num_layers = args.num_layers
+        self.batch_norm = args.batch_norm
+        self.highway_layers = args.highway_layers
+        self.num_layers = args.num_layers
+        self.rnn_size = args.rnn_size
+        self.dropout = args.dropout
+        self.learning_rate = args.learning_rate
+        self.max_grad_norm = args.max_grad_norm
+        self.seq_length = args.seq_length
         self.base_dir = base_dir
         self.data_dir = data_dir
         self.output_base_dir = output_base_dir
@@ -47,6 +68,12 @@ class Parameters:
         self.kci_korean_json_filepath = kci_korean_json_filepath
         self.preprocessed_json_filepath = preprocessed_json_filepath
         self.whole_sentences_txt_filepath = whole_sentences_txt_filepath
+        self.vocab_filepath = vocab_filepath
+        self.tensor_file = tensor_file
+        self.char_file = char_file
+        self.param_pkl_filepath = param_pkl_filepath
+        self.model_json_filepath = model_json_filepath
+        self.model_weights_h5_filepath = model_weights_h5_filepath
 
     def __str__(self):
         item_strf = ['{} = {}'.format(attribute, value) for attribute, value in self.__dict__.items()]

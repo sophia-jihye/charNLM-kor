@@ -14,9 +14,14 @@ class Quantizer:
         self.n_words = parameters.n_words
         self.n_chars = parameters.n_chars
         input_objects = [whole_sentences, whole_sentences, whole_sentences]
-        vocab_file = parameters.vocab_filepath
-        tensor_file = parameters.tensor_filepath
-        char_file = parameters.char_filepath
+        vocab_filepath = parameters.vocab_filepath
+        tensor_file = parameters.tensor_file
+        char_file = parameters.char_file
+        
+        # construct a tensor with all the data
+        if not (path.exists(vocab_filepath) or path.exists(tensor_file) or path.exists(char_file)):
+            print('one-time setup: preprocessing input train/valid/test files in dir:', parameters.output_base_dir)
+            self.text_to_tensor(self.tokens, input_objects, vocab_filepath, tensor_file, char_file, self.max_word_l)
         
     def tokens(self):
         Tokens = namedtuple('Tokens', ['EOS', 'UNK', 'START', 'END', 'ZEROPAD'])
@@ -28,11 +33,6 @@ class Quantizer:
                 ZEROPAD=' ' # zero-pad token
             )
         return tokens
-        
-    # construct a tensor with all the data
-    if not (path.exists(vocab_file) or path.exists(tensor_file) or path.exists(char_file)):
-        print('one-time setup: preprocessing input train/valid/test files in dir:', parameters.output_base_dir)
-        self.text_to_tensor(self.tokens, input_objects, vocab_file, tensor_file, char_file, self.max_word_l)
     
     def word2jamo(self, word):
         l = [hangul.split_jamo(char) for char in word]
