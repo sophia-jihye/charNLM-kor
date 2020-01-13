@@ -220,7 +220,7 @@ class Quantizer:
                 line = line.replace('<unk>', tokens.UNK)  # replace unk with a single character
                 line = line.replace(tokens.START, '')  # start-of-word token is reserved
                 line = line.replace(tokens.END, '')  # end-of-word token is reserved
-                words = prog.split(line)
+                words = self.line2words_morphs(line)
                 for rword in filter(None, words):
                     word_num = append(rword, word_num)
                 if tokens.EOS != '':   # PTB does not have <eos> so we add a character for <eos> tokens
