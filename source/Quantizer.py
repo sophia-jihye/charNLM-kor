@@ -5,12 +5,12 @@ import re
 from collections import Counter, OrderedDict, namedtuple
 from config import parameters
 import hangul
-from konlpy.tag import Okt
+from konlpy.tag import Kkma
 
 class Quantizer:
     def __init__(self, whole_sentences):
         self.prog = re.compile('\s+')
-        self.okt = Okt()
+        self.kkma = Kkma()
         self.tokens = self.tokens()
         self.batch_size = parameters.batch_size
         self.seq_length = parameters.seq_length
@@ -22,10 +22,7 @@ class Quantizer:
         char_file = parameters.char_file
         initial_max_word_l = parameters.max_word_l
         
-        # construct a tensor with all the data
-        if not (path.exists(vocab_filepath) or path.exists(tensor_file) or path.exists(char_file)):
-            print('one-time setup: preprocessing input train/valid/test files in dir:', parameters.output_base_dir)
-            self.text_to_tensor(self.tokens, input_objects, vocab_filepath, tensor_file, char_file, initial_max_word_l)
+        self.text_to_tensor(self.tokens, input_objects, vocab_filepath, tensor_file, char_file, initial_max_word_l)
         
         self.idx2word, self.word2idx, self.idx2char, self.char2idx = self.vocab_unpack(vocab_filepath)
         self.vocab_size = len(self.idx2word)
@@ -119,8 +116,12 @@ class Quantizer:
         return words
     
     def line2words_morphs(self, line):
-        words = self.okt.morphs(line)
+        words = self.kkma.morphs(line)
         return words
+
+    def line2words_nouns(self, line):
+        words = [word for (word, pos) in self.kkma.pos(line) if pos in ['OL', 'NNG']]
+        return words    
     
     def text_to_tensor(self, tokens, input_objects, out_vocabfile, out_tensorfile, out_charfile, max_word_l):
         print('Processing text into tensors...')
@@ -159,7 +160,7 @@ class Quantizer:
                 line = line.replace('<unk>', tokens.UNK)  # replace unk with a single character
                 line = line.replace(tokens.START, '')  # start-of-word token is reserved
                 line = line.replace(tokens.END, '')  # end-of-word token is reserved
-                words = self.line2words_morphs(line)
+                words = self.line2words_nouns(line)
                 for word in filter(None, words):
                     update(word)
                     max_word_l_tmp = max(max_word_l_tmp, len(word) + 2) # add 2 for start/end chars
@@ -169,26 +170,27 @@ class Quantizer:
                     counts += 1 # PTB uses \n for <eos>, so need to add one more token at the end
             split_counts.append(counts)
 
-        print('Most frequent words:', len(wordcount))
+        print('# of unique words: %d' % len(wordcount))
         for ii, ww in enumerate(wordcount.most_common(self.n_words - 1)):
             word = ww[0]
             word2idx[word] = ii + 1
             idx2word.append(word)
             if ii < 3: print(word)
 
-        print('Most frequent chars:', len(charcount))
+        print('# of unique characters: %d' % len(charcount))
         for ii, cc in enumerate(charcount.most_common(self.n_chars - 4)):
             char = cc[0]
             char2idx[char] = ii + 4
             idx2char.append(char)
             if ii < 3: print(char)
 
-        print('Char counts:')
-        for ii, cc in enumerate(charcount.most_common()):
-            print(ii, cc[0].encode('utf8'), cc[1])
+        #print('Char counts:')
+        #for ii, cc in enumerate(charcount.most_common()):
+            #print(ii, cc[0].encode('utf8'), cc[1])
 
         print('After first pass of data, max word length is:', max_word_l_tmp)
-        print('Token count: train %d, val %d, test %d' % (split_counts[0], split_counts[1], split_counts[2]))
+        print('# of tokens (not unique): %d' % split_counts[0] )
+        #print('Token count: train %d, val %d, test %d' % (split_counts[0], split_counts[1], split_counts[2]))
 
         # if actual max word length is less than the limit, use that
         max_word_l = min(max_word_l_tmp, max_word_l)
