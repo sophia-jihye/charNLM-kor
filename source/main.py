@@ -9,7 +9,7 @@ import json
 # filepath
 kci_korean_json_filepath = parameters.kci_korean_json_filepath
 preprocessed_json_filepath = parameters.preprocessed_json_filepath
-whole_sentences_txt_filepath = parameters.whole_sentences_txt_filepath
+whole_units_for_train_txt_filepath = parameters.whole_units_for_train_txt_filepath
 model_param_pkl_filepath = parameters.model_param_pkl_filepath
 model_json_filepath = parameters.model_json_filepath
 model_weights_h5_filepath = parameters.model_weights_h5_filepath
@@ -40,7 +40,7 @@ def load_raw_data(filepath):
     df = pd.read_json(d)
     return df
 
-def raw2preprocessed(preprocessor, df):
+def raw2sentences(preprocessor, df):
     df = preprocessor.remove_outlier_document(df)
     df = preprocessor.remove_outlier_sentence(df)
     
@@ -50,26 +50,31 @@ def raw2preprocessed(preprocessor, df):
         print('Created file:', preprocessed_json_filepath)
     return df
 
-def for_train(preprocessor, df):
-    whole_sentences = preprocessor.flatten_whole_sentences(df)
+def for_train(preprocessor, df, key_column):
+    whole_units = preprocessor.flatten_whole_units(df, key_column)
+    print('# of (not unique) tokens = %d' % len(whole_units))
     
     # save as .txt
-    f = open(whole_sentences_txt_filepath, 'w')
-    for i in range(len(whole_sentences)):
-        data = "%s\n" % whole_sentences[i]
-        f.write(data)
+    f = open(whole_units_for_train_txt_filepath, 'w')
+    f.write(' '.join(whole_units))
     f.close()
-    print('Created file:', whole_sentences_txt_filepath)
-    return whole_sentences
+    print('Created file:', whole_units_for_train_txt_filepath)
+    return whole_units
 
 def main():
     df = load_raw_data(kci_korean_json_filepath)
     
     preprocessor = Preprocessor()
-    df = raw2preprocessed(preprocessor, df)
-    whole_sentences = for_train(preprocessor, df)
+    df = raw2sentences(preprocessor, df)
     
-    loader = Quantizer(whole_sentences)
+    df['flattened_sentences'] = df.apply(lambda x: ' '.join(x['sentences']),axis=1)
+    stopwords = preprocessor.stopwords(df['flattened_sentences'])
+    print('# of stopwords = %d \n%s' % (len(stopwords), stopwords))
+    df['nouns'] = df.apply(lambda x: preprocessor.line2words_nouns(x['flattened_sentences'], stopwords, remove_len=True), axis=1)
+    
+    whole_units = for_train(preprocessor, df, 'nouns')
+    
+    loader = Quantizer(whole_units)
     word_vocab_size = min(n_words, len(loader.idx2word))
     char_vocab_size = min(n_chars, len(loader.idx2char))
     max_word_l = loader.max_word_l

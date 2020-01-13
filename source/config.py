@@ -40,7 +40,7 @@ create_dirs([output_base_dir, now_time_str_dir])
 # filepath
 kci_korean_json_filepath = os.path.join(data_dir, 'kci_korean_sentences_510_191230.json')
 preprocessed_json_filepath = os.path.join(now_time_str_dir, 'preprocessed.json')
-whole_sentences_txt_filepath = os.path.join(now_time_str_dir, 'whole_sentences.txt')
+whole_units_for_train_txt_filepath = os.path.join(now_time_str_dir, 'whole_units_for_train.txt')
 vocab_filepath = os.path.join(now_time_str_dir, 'vocab.npz')
 tensor_file = os.path.join(now_time_str_dir, 'data')
 char_file = os.path.join(now_time_str_dir, 'data_char')
@@ -80,7 +80,7 @@ class Parameters:
         self.kci_korean_semtemce_length_outlier_long = kci_korean_semtemce_length_outlier_long
         self.kci_korean_json_filepath = kci_korean_json_filepath
         self.preprocessed_json_filepath = preprocessed_json_filepath
-        self.whole_sentences_txt_filepath = whole_sentences_txt_filepath
+        self.whole_units_for_train_txt_filepath = whole_units_for_train_txt_filepath
         self.vocab_filepath = vocab_filepath
         self.tensor_file = tensor_file
         self.char_file = char_file

@@ -5,12 +5,10 @@ import re
 from collections import Counter, OrderedDict, namedtuple
 from config import parameters
 import hangul
-from konlpy.tag import Kkma
 
 class Quantizer:
     def __init__(self, whole_sentences):
         self.prog = re.compile('\s+')
-        self.kkma = Kkma()
         self.tokens = self.tokens()
         self.batch_size = parameters.batch_size
         self.seq_length = parameters.seq_length
@@ -114,15 +112,7 @@ class Quantizer:
     def line2words_blank(self, line):
         words = self.prog.split(line)
         return words
-    
-    def line2words_morphs(self, line):
-        words = self.kkma.morphs(line)
-        return words
 
-    def line2words_nouns(self, line):
-        words = [word for (word, pos) in self.kkma.pos(line) if pos in ['OL', 'NNG']]
-        return words    
-    
     def text_to_tensor(self, tokens, input_objects, out_vocabfile, out_tensorfile, out_charfile, max_word_l):
         print('Processing text into tensors...')
         max_word_l_tmp = 0 # max word length of the corpus
@@ -160,7 +150,7 @@ class Quantizer:
                 line = line.replace('<unk>', tokens.UNK)  # replace unk with a single character
                 line = line.replace(tokens.START, '')  # start-of-word token is reserved
                 line = line.replace(tokens.END, '')  # end-of-word token is reserved
-                words = self.line2words_nouns(line)
+                words = self.line2words_blank(line)
                 for word in filter(None, words):
                     update(word)
                     max_word_l_tmp = max(max_word_l_tmp, len(word) + 2) # add 2 for start/end chars
@@ -222,7 +212,7 @@ class Quantizer:
                 line = line.replace('<unk>', tokens.UNK)  # replace unk with a single character
                 line = line.replace(tokens.START, '')  # start-of-word token is reserved
                 line = line.replace(tokens.END, '')  # end-of-word token is reserved
-                words = self.line2words_morphs(line)
+                words = self.line2words_blank(line)
                 for rword in filter(None, words):
                     word_num = append(rword, word_num)
                 if tokens.EOS != '':   # PTB does not have <eos> so we add a character for <eos> tokens

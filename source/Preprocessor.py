@@ -3,6 +3,8 @@ from utils import *
 import os
 import re
 import pandas as pd
+from konlpy.tag import Okt
+from sklearn.feature_extraction.text import CountVectorizer
 
 letter_pattern = re.compile('[^ㄱ-ㅣ가-힣a-zA-Z]+')
 doublespace_pattern = re.compile('\s+')
@@ -12,9 +14,18 @@ class Preprocessor:
         self.kci_korean_document_length_outlier_short = parameters.kci_korean_document_length_outlier_short
         self.kci_korean_sentence_length_outlier_short = parameters.kci_korean_sentence_length_outlier_short
         self.kci_korean_semtemce_length_outlier_long = parameters.kci_korean_semtemce_length_outlier_long
+        self.okt = Okt()
         
     def __str__(self):
         return os.path.abspath(__file__)
+    
+    def line2words_nouns(self, line, stopwords=None, remove_len=False):
+        words = [word for (word, pos) in self.okt.pos(line) if pos in ['Alpha', 'Noun']]
+        if stopwords is not None:
+            words = [word for word in words if word not in stopwords]
+        if remove_len:
+            words = [word for word in words if len(word) != 1]
+        return words
     
     def remove_outlier_document(self, df):
         df['length_of_doc'] = df.apply(lambda x: len(x['sentences']),axis=1)
@@ -38,8 +49,14 @@ class Preprocessor:
                 i += 1
         return df
     
-    def flatten_whole_sentences(self, df):
-        whole_sentences = list()
+    def stopwords(self, corpus):
+        vectorizer = CountVectorizer(min_df=0.90, max_df=1.0, tokenizer=lambda x:self.line2words_nouns(x))
+        X = vectorizer.fit_transform(corpus)
+        stopwords = list(vectorizer.vocabulary_.keys())
+        return stopwords
+    
+    def flatten_whole_units(self, df, key_column):
+        whole_units = list()
         for index, row in df.iterrows():
-            whole_sentences.extend(row['sentences'])
-        return whole_sentences
+            whole_units.extend(row[key_column])
+        return whole_units
