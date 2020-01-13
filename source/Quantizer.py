@@ -175,14 +175,14 @@ class Quantizer:
             word = ww[0]
             word2idx[word] = ii + 1
             idx2word.append(word)
-            if ii < 3: print(word)
+            #if ii < 3: print(word)
 
         print('# of unique characters: %d' % len(charcount))
         for ii, cc in enumerate(charcount.most_common(self.n_chars - 4)):
             char = cc[0]
             char2idx[char] = ii + 4
             idx2char.append(char)
-            if ii < 3: print(char)
+            #if ii < 3: print(char)
 
         #print('Char counts:')
         #for ii, cc in enumerate(charcount.most_common()):
