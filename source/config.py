@@ -34,20 +34,20 @@ base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 print('base_dir:', base_dir)
 data_dir = os.path.join(base_dir, 'data')
 output_base_dir = os.path.join(base_dir, 'output')
-create_dirs([output_base_dir])
-
+now_time_str_dir = os.path.join(base_dir, 'output', now_time_str())
+create_dirs([output_base_dir, now_time_str_dir])
 
 # filepath
 kci_korean_json_filepath = os.path.join(data_dir, 'kci_korean_sentences_510_191230.json')
-preprocessed_json_filepath = os.path.join(output_base_dir, ('%s_preprocessed.json' % now_time_str()))
-whole_sentences_txt_filepath = os.path.join(output_base_dir, ('%s_whole_sentences.txt' % now_time_str()))
-vocab_filepath = os.path.join(output_base_dir, ('%s_vocab.npz' % now_time_str()))
-tensor_file = os.path.join(output_base_dir, ('%s_data' % now_time_str()))
-char_file = os.path.join(output_base_dir, ('%s_data_char' % now_time_str()))
-model_param_pkl_filepath = os.path.join(output_base_dir, ('%s_model_param.pkl' % now_time_str()))
-model_json_filepath = os.path.join(output_base_dir, ('%s_model.json' % now_time_str()))
-model_weights_h5_filepath = os.path.join(output_base_dir, ('%s_model_weights.h5' % now_time_str()))
-save_epoch_file = os.path.join(output_base_dir, ('%s_epoch' % now_time_str()))
+preprocessed_json_filepath = os.path.join(now_time_str_dir, 'preprocessed.json')
+whole_sentences_txt_filepath = os.path.join(now_time_str_dir, 'whole_sentences.txt')
+vocab_filepath = os.path.join(now_time_str_dir, 'vocab.npz')
+tensor_file = os.path.join(now_time_str_dir, 'data')
+char_file = os.path.join(now_time_str_dir, 'data_char')
+model_param_pkl_filepath = os.path.join(now_time_str_dir, 'model_param.pkl')
+model_json_filepath = os.path.join(now_time_str_dir, 'model.json')
+model_weights_h5_filepath = os.path.join(now_time_str_dir, 'model_weights.h5')
+save_epoch_file = os.path.join(now_time_str_dir, 'epoch')
 
 class Parameters:
     def __init__(self):

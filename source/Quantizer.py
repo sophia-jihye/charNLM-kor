@@ -5,9 +5,12 @@ import re
 from collections import Counter, OrderedDict, namedtuple
 from config import parameters
 import hangul
+from konlpy.tag import Okt
 
 class Quantizer:
     def __init__(self, whole_sentences):
+        self.prog = re.compile('\s+')
+        self.okt = Okt()
         self.tokens = self.tokens()
         self.batch_size = parameters.batch_size
         self.seq_length = parameters.seq_length
@@ -111,6 +114,14 @@ class Quantizer:
             jamo_list.extend(jamo)
         return jamo_list
     
+    def line2words_blank(self, line):
+        words = self.prog.split(line)
+        return words
+    
+    def line2words_morphs(self, line):
+        words = self.okt.morphs(line)
+        return words
+    
     def text_to_tensor(self, tokens, input_objects, out_vocabfile, out_tensorfile, out_charfile, max_word_l):
         print('Processing text into tensors...')
         max_word_l_tmp = 0 # max word length of the corpus
@@ -129,7 +140,7 @@ class Quantizer:
         # if actual max word length is smaller than specified
         # we use that instead. this is inefficient, but only a one-off thing so should be fine
         # also counts the number of tokens
-        prog = re.compile('\s+')
+        
         wordcount = Counter()
         charcount = Counter()
         for	split in range(3): # split = 0 (train), 1 (val), or 2 (test)
@@ -148,7 +159,7 @@ class Quantizer:
                 line = line.replace('<unk>', tokens.UNK)  # replace unk with a single character
                 line = line.replace(tokens.START, '')  # start-of-word token is reserved
                 line = line.replace(tokens.END, '')  # end-of-word token is reserved
-                words = prog.split(line)
+                words = self.line2words_morphs(line)
                 for word in filter(None, words):
                     update(word)
                     max_word_l_tmp = max(max_word_l_tmp, len(word) + 2) # add 2 for start/end chars
