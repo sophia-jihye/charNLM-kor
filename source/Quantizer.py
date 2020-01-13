@@ -4,10 +4,12 @@ import gc
 import re
 from collections import Counter, OrderedDict, namedtuple
 from config import parameters
+from utils import *
 import hangul
 
 class Quantizer:
     def __init__(self, whole_sentences):
+        self.log_filepath = parameters.log_filepath
         self.prog = re.compile('\s+')
         self.tokens = self.tokens()
         self.batch_size = parameters.batch_size
@@ -180,6 +182,7 @@ class Quantizer:
 
         print('After first pass of data, max word length is:', max_word_l_tmp)
         print('# of tokens (not unique): %d' % split_counts[0] )
+        write_log(self.log_filepath, split_counts[0])
         #print('Token count: train %d, val %d, test %d' % (split_counts[0], split_counts[1], split_counts[2]))
 
         # if actual max word length is less than the limit, use that

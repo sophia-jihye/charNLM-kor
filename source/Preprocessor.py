@@ -55,8 +55,8 @@ class Preprocessor:
         stopwords = list(vectorizer.vocabulary_.keys())
         return stopwords
     
-    def flatten_whole_units(self, df, key_column):
-        whole_units = list()
+    def flatten_whole_sentences(self, df, key_column):
+        whole_sentences = list()
         for index, row in df.iterrows():
-            whole_units.extend(row[key_column])
-        return whole_units
+            whole_sentences.append(' '.join(row[key_column]))
+        return whole_sentences

@@ -70,11 +70,25 @@ def main():
     df['flattened_sentences'] = df.apply(lambda x: ' '.join(x['sentences']),axis=1)
     stopwords = preprocessor.stopwords(df['flattened_sentences'])
     print('# of stopwords = %d \n%s' % (len(stopwords), stopwords))
+    
+    ###########################
     df['nouns'] = df.apply(lambda x: preprocessor.line2words_nouns(x['flattened_sentences'], stopwords, remove_len=True), axis=1)
     
-    whole_units = for_train(preprocessor, df, 'nouns')
+    #whole_units = for_train(preprocessor, df, 'nouns')
+    whole_sentences = preprocessor.flatten_whole_sentences(df, 'nouns')
+    print('# of sentences = %d' % len(whole_sentences))
     
-    loader = Quantizer(whole_units)
+    # save as .txt
+    f = open(whole_units_for_train_txt_filepath, 'w')
+    for i in range(len(whole_sentences)):
+        data = "%s\n" % whole_sentences[i]
+        f.write(data)
+    f.close()
+    print('Created file:', whole_units_for_train_txt_filepath)
+    
+    ###########################
+    
+    loader = Quantizer(whole_sentences)
     word_vocab_size = min(n_words, len(loader.idx2word))
     char_vocab_size = min(n_chars, len(loader.idx2char))
     max_word_l = loader.max_word_l
