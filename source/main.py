@@ -33,6 +33,8 @@ max_epochs = parameters.max_epochs
 decay_when = parameters.decay_when
 learning_rate_decay = parameters.learning_rate_decay
 save_every = parameters.save_every
+min_df = parameters.min_df
+remove_len = parameters.remove_len
 
 def load_raw_data(filepath):
     with open(filepath,"r") as f:
@@ -50,17 +52,6 @@ def raw2sentences(preprocessor, df):
         print('Created file:', preprocessed_json_filepath)
     return df
 
-def for_train(preprocessor, df, key_column):
-    whole_units = preprocessor.flatten_whole_units(df, key_column)
-    print('# of (not unique) tokens = %d' % len(whole_units))
-    
-    # save as .txt
-    f = open(whole_units_for_train_txt_filepath, 'w')
-    f.write(' '.join(whole_units))
-    f.close()
-    print('Created file:', whole_units_for_train_txt_filepath)
-    return whole_units
-
 def main():
     df = load_raw_data(kci_korean_json_filepath)
     
@@ -68,13 +59,12 @@ def main():
     df = raw2sentences(preprocessor, df)
     
     df['flattened_sentences'] = df.apply(lambda x: ' '.join(x['sentences']),axis=1)
-    stopwords = preprocessor.stopwords(df['flattened_sentences'])
+    stopwords = preprocessor.stopwords(df['flattened_sentences'], min_df)
     print('# of stopwords = %d \n%s' % (len(stopwords), stopwords))
     
-    ###########################
-    df['nouns'] = df.apply(lambda x: preprocessor.line2words_nouns(x['flattened_sentences'], stopwords, remove_len=True), axis=1)
+    # extract nouns
+    df['nouns'] = df.apply(lambda x: preprocessor.line2words_nouns(x['flattened_sentences'], stopwords, remove_len=remove_len), axis=1)
     
-    #whole_units = for_train(preprocessor, df, 'nouns')
     whole_sentences = preprocessor.flatten_whole_sentences(df, 'nouns')
     print('# of sentences = %d' % len(whole_sentences))
     
@@ -86,8 +76,7 @@ def main():
     f.close()
     print('Created file:', whole_units_for_train_txt_filepath)
     
-    ###########################
-    
+    # process text to tensor
     loader = Quantizer(whole_sentences)
     word_vocab_size = min(n_words, len(loader.idx2word))
     char_vocab_size = min(n_chars, len(loader.idx2char))

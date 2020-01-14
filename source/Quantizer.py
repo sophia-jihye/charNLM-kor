@@ -9,7 +9,7 @@ import hangul
 
 class Quantizer:
     def __init__(self, whole_sentences):
-        self.log_filepath = parameters.log_filepath
+        self.log_dir = parameters.log_dir
         self.prog = re.compile('\s+')
         self.tokens = self.tokens()
         self.batch_size = parameters.batch_size
@@ -163,6 +163,7 @@ class Quantizer:
             split_counts.append(counts)
 
         print('# of unique words: %d' % len(wordcount))
+        write_log(self.log_dir, 'num_of_unique_tokens.log', len(wordcount))
         for ii, ww in enumerate(wordcount.most_common(self.n_words - 1)):
             word = ww[0]
             word2idx[word] = ii + 1
@@ -182,7 +183,7 @@ class Quantizer:
 
         print('After first pass of data, max word length is:', max_word_l_tmp)
         print('# of tokens (not unique): %d' % split_counts[0] )
-        write_log(self.log_filepath, split_counts[0])
+        write_log(self.log_dir, 'num_of_tokens.log', split_counts[0])
         #print('Token count: train %d, val %d, test %d' % (split_counts[0], split_counts[1], split_counts[2]))
 
         # if actual max word length is less than the limit, use that

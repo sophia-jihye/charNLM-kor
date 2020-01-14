@@ -49,8 +49,8 @@ class Preprocessor:
                 i += 1
         return df
     
-    def stopwords(self, corpus):
-        vectorizer = CountVectorizer(min_df=0.90, max_df=1.0, tokenizer=lambda x:self.line2words_nouns(x))
+    def stopwords(self, corpus, min_df):
+        vectorizer = CountVectorizer(min_df=min_df, max_df=1.0, tokenizer=lambda x:self.line2words_nouns(x))
         X = vectorizer.fit_transform(corpus)
         stopwords = list(vectorizer.vocabulary_.keys())
         return stopwords

@@ -19,8 +19,8 @@ def create_dirs(dir_list):
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-def write_log(log_filepath, content):
-    text_file = open(log_filepath, "w", encoding='utf-8')
+def write_log(log_dir, fname, content):
+    text_file = open(os.path.join(log_dit, fname), "w", encoding='utf-8')
     text_file.write(str(content))
     text_file.close()
     print("Log occurred: ", log_filepath)            

@@ -6,7 +6,7 @@ parser = argparse.ArgumentParser(description='Train a word+character-level langu
 parser.add_argument('--batch_size', type=int, default=20, help='number of sequences to train on in parallel')
 parser.add_argument('--seq_length', type=int, default=35, help='number of timesteps to unroll for')
 parser.add_argument('--max_word_l', type=int, default=100, help='maximum word length')
-parser.add_argument('--n_words', type=int, default=30000, help='max number of words in model')
+parser.add_argument('--n_words', type=int, default=45000, help='max number of words in model')
 parser.add_argument('--n_chars', type=int, default=100, help='max number of char in model')
 parser.add_argument('--char_vec_size', type=int, default=15, help='dimensionality of character embeddings')
 parser.add_argument('--feature_maps', type=int, nargs='+', default=[50,100,150,200,200,200,200], help='number of feature maps in the CNN')
@@ -28,6 +28,8 @@ args = parser.parse_args()
 kci_korean_document_length_outlier_short = 60
 kci_korean_sentence_length_outlier_short = 35
 kci_korean_semtemce_length_outlier_long = 8000
+min_df = 0.95
+remove_len = False
 
 # System configuration
 base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -39,7 +41,7 @@ create_dirs([output_base_dir, now_time_str_dir])
 
 # filepath
 kci_korean_json_filepath = os.path.join(data_dir, 'kci_korean_sentences_510_191230.json')
-log_filepath = os.path.join(now_time_str_dir, 'num_of_tokens.log')
+log_dir = os.path.join(now_time_str_dir)
 preprocessed_json_filepath = os.path.join(now_time_str_dir, 'outlier_removed.json')
 whole_units_for_train_txt_filepath = os.path.join(now_time_str_dir, 'whole_units_for_train.txt')
 vocab_filepath = os.path.join(now_time_str_dir, 'vocab.npz')
@@ -79,8 +81,11 @@ class Parameters:
         self.kci_korean_document_length_outlier_short = kci_korean_document_length_outlier_short
         self.kci_korean_sentence_length_outlier_short = kci_korean_sentence_length_outlier_short
         self.kci_korean_semtemce_length_outlier_long = kci_korean_semtemce_length_outlier_long
+        self.min_df = min_df
+        self.remove_len = remove_len
+        
         self.kci_korean_json_filepath = kci_korean_json_filepath
-        self.log_filepath = log_filepath
+        self.log_dir = log_dir
         self.preprocessed_json_filepath = preprocessed_json_filepath
         self.whole_units_for_train_txt_filepath = whole_units_for_train_txt_filepath
         self.vocab_filepath = vocab_filepath
