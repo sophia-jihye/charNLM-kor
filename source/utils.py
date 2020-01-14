@@ -20,7 +20,7 @@ def create_dirs(dir_list):
             os.makedirs(directory)
 
 def write_log(log_dir, fname, content):
-    text_file = open(os.path.join(log_dit, fname), "w", encoding='utf-8')
+    text_file = open(os.path.join(log_dir, fname), "w", encoding='utf-8')
     text_file.write(str(content))
     text_file.close()
     print("Log occurred: ", log_filepath)            
