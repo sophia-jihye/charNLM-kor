@@ -54,7 +54,7 @@ class Quantizer:
     
     def vocab_unpack(self, vocab_filepath):
         vocab = np.load(vocab_filepath)
-        return vocab['idx2word'], vocab['word2idx'], vocab['idx2char'], vocab['char2idx']
+        return vocab['idx2word'].item(), vocab['word2idx'].item(), vocab['idx2char'].item(), vocab['char2idx'].item()
     
     def load_tensor_data(self, tensor_file, char_file):
         all_data = []

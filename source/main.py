@@ -68,7 +68,7 @@ def main():
     df['nouns'] = df.apply(lambda x: preprocessor.line2words_nouns(x['flattened_sentences'], stopwords, remove_len=remove_len), axis=1)
     
     whole_sentences = preprocessor.flatten_whole_sentences(df, 'nouns')
-    print('# of sentences = %d' % len(whole_sentences))
+    print('# of documents = %d' % len(whole_sentences))
     
     # save as .txt
     f = open(whole_units_for_train_txt_filepath, 'w')
