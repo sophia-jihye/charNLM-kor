@@ -123,11 +123,6 @@ class Quantizer:
         char2idx = {tokens.UNK:0, tokens.START:1, tokens.END:2, tokens.ZEROPAD:3}
         
         split_counts = []
-
-        # first go through train/valid/test to get max word length
-        # if actual max word length is smaller than specified
-        # we use that instead. this is inefficient, but only a one-off thing so should be fine
-        # also counts the number of tokens
         
         wordcount = Counter()
         charcount = Counter()
@@ -162,7 +157,6 @@ class Quantizer:
         for ii, ww in enumerate(wordcount.most_common(self.n_words - 1)):
             word = ww[0]
             word2idx[word] = ii + 1
-            #if ii < 3: print(word)
 
         print('# of unique characters: %d' % len(charcount))
         for ii, cc in enumerate(charcount.most_common(self.n_chars - 4)):
@@ -173,7 +167,6 @@ class Quantizer:
         print('# of tokens (not unique): %d' % split_counts[0] )
         write_log(self.log_dir, 'num_of_tokens.log', split_counts[0])
         
-        # if actual max word length is less than the limit, use that
         max_word_l = min(max_word_l_tmp, max_word_l)
 
         for split in range(3):  # split = 0 (train), 1 (val), or 2 (test)

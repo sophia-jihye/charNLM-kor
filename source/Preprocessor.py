@@ -53,6 +53,13 @@ class Preprocessor:
         vectorizer = CountVectorizer(min_df=min_df, max_df=1.0, tokenizer=lambda x:self.line2words_nouns(x))
         X = vectorizer.fit_transform(corpus)
         stopwords = list(vectorizer.vocabulary_.keys())
+        
+        vectorizer = CountVectorizer(min_df=0.0, max_df=1.0)
+        X = vectorizer.fit_transform(corpus)
+        freq = np.sum(X.toarray(), axis=0)
+        for word_idx in range(len(vectorizer.vocabulary_.keys())):
+            if freq[word_idx] <= 1:
+                stopwords.append(list(vectorizer.vocabulary_.keys())[word_idx])
         return stopwords
     
     def flatten_whole_sentences(self, df, key_column):

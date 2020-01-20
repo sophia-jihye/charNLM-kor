@@ -91,7 +91,7 @@ def main():
     pickle.dump(parameters, open(model_param_pkl_filepath, "wb"))
     model.save(model_json_filepath)
     
-    Train, Validation, Test = 0, 1, 2
+    #Train, Validation, Test = 0, 1, 2
     model.fit_generator(loader.next_batch(Train), loader.split_sizes[Train], max_epochs,
                         loader.next_batch(Validation), loader.split_sizes[Validation], decay_when, learning_rate_decay, save_every, save_epoch_file)
     model.save_weights(model_weights_h5_filepath, overwrite=True)
