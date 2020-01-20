@@ -97,16 +97,16 @@ def main():
     model.save_weights(model_weights_h5_filepath, overwrite=True)
     
     # word embedding vectors
-    embedding_tensor = model.layers[-1].weights[0].value()
-    with tf.Session() as sess:
-        init = tf.global_variables_initializer()
-        sess.run(init)
-        embedding = sess.run(embedding_tensor)
-    embedding = np.transpose(embedding)
-    # save as .pkl
-    with open(model_embedding_vectors_pkl_filepath, mode='wb') as f:
-        pickle.dump(embedding, f)
-    print('Created %s' % model_embedding_vectors_pkl_filepath)
+#     embedding_tensor = model.layers[-1].weights[0].value()
+#     with tf.Session() as sess:
+#         init = tf.global_variables_initializer()
+#         sess.run(init)
+#         embedding = sess.run(embedding_tensor)
+#     embedding = np.transpose(embedding)
+#     # save as .pkl
+#     with open(model_embedding_vectors_pkl_filepath, mode='wb') as f:
+#         pickle.dump(embedding, f)
+#     print('Created %s' % model_embedding_vectors_pkl_filepath)
     
 if __name__ == '__main__':
     main()

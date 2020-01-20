@@ -33,8 +33,6 @@ jaum_list = ['ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄸ', 'ㄹ',
 moum_list = ['ㅏ', 'ㅐ', 'ㅑ', 'ㅒ', 'ㅓ', 'ㅔ', 'ㅕ', 'ㅖ', 'ㅗ', 'ㅘ', 
               'ㅙ', 'ㅚ', 'ㅛ', 'ㅜ', 'ㅝ', 'ㅞ', 'ㅟ', 'ㅠ', 'ㅡ', 'ㅢ', 'ㅣ']
 
-double_jaum_moum_dict = {'ㄲ': ['ㄱ', 'ㄱ'], 'ㄸ': ['ㄷ', 'ㄷ'], 'ㅃ': ['ㅂ', 'ㅂ'], 'ㅆ': ['ㅅ', 'ㅅ'], 'ㅉ': ['ㅈ', 'ㅈ'], 'ㄳ': ['ㄱ', 'ㅅ'], 'ㄵ': ['ㄴ', 'ㅈ'], 'ㄶ': ['ㄴ', 'ㅎ'], 'ㄺ': ['ㄹ', 'ㄱ'], 'ㄻ': ['ㄹ', 'ㅁ'], 'ㄼ': ['ㄹ', 'ㅂ'], 'ㄽ': ['ㄹ', 'ㅅ'], 'ㄾ': ['ㄹ', 'ㅌ'], 'ㄿ': ['ㄹ', 'ㅍ'], 'ㅀ': ['ㄹ', 'ㅎ'], 'ㅄ': ['ㅂ', 'ㅅ'], 'ㅐ': ['ㅏ', 'ㅣ'], 'ㅒ': ['ㅑ', 'ㅣ'], 'ㅔ': ['ㅓ', 'ㅣ'], 'ㅖ': ['ㅕ', 'ㅣ'], 'ㅘ': ['ㅗ', 'ㅏ'], 'ㅙ': ['ㅗ', 'ㅏ', 'ㅣ'], 'ㅚ': ['ㅗ', 'ㅣ'], 'ㅝ': ['ㅜ', 'ㅓ'], 'ㅞ': ['ㅜ', 'ㅓ', 'ㅣ'], 'ㅟ': ['ㅜ', 'ㅣ'], 'ㅢ': ['ㅡ', 'ㅣ']}
-
 doublespace_pattern = re.compile('\s+')
 repeatchars_pattern = re.compile('(\w)\\1{3,}')
 
@@ -55,20 +53,13 @@ def normalize(doc, english=False, number=False, punctuation=False, remove_repeat
             
     return doublespace_pattern.sub(' ', f).strip()
 
-def doublejamo2jamo(item):
-    if item in double_jaum_moum_dict:
-        item = double_jaum_moum_dict[item]
-    return item
-
 def split_jamo(c):    
     i = ord(c)
     if not is_korean(i):
         return [c]
     elif is_jaum(i):
-        c = doublejamo2jamo(c)
         return [c]
     elif is_moum(i):
-        c = doublejamo2jamo(c)
         return [c]
     
     i -= kor_begin
@@ -80,11 +71,7 @@ def split_jamo(c):
     chosung = chosung_list[cho]
     jungsung = jungsung_list[jung]
     jongsung = jongsung_list[jong]
-    chosung = doublejamo2jamo(chosung)
-    jungsung = doublejamo2jamo(jungsung)
-    jongsung = doublejamo2jamo(jongsung)
     result = [chosung, jungsung, jongsung]
-    result = [item for item in result if item != ' ']
     return result
 
 def is_korean(i):

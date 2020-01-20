@@ -118,15 +118,10 @@ class Quantizer:
     def text_to_tensor(self, tokens, input_objects, out_vocabfile, out_tensorfile, out_charfile, max_word_l):
         print('Processing text into tensors...')
         max_word_l_tmp = 0 # max word length of the corpus
-        idx2word = [tokens.UNK] # unknown word token
-        word2idx = OrderedDict()
-        word2idx[tokens.UNK] = 0
-        idx2char = [tokens.ZEROPAD, tokens.START, tokens.END, tokens.UNK] # zero-pad, start-of-word, end-of-word tokens
-        char2idx = OrderedDict()
-        char2idx[tokens.ZEROPAD] = 0
-        char2idx[tokens.START] = 1
-        char2idx[tokens.END] = 2
-        char2idx[tokens.UNK] = 3
+        
+        word2idx = {tokens.UNK:0}        
+        char2idx = {tokens.UNK:0, tokens.START:1, tokens.END:2, tokens.ZEROPAD:3}
+        
         split_counts = []
 
         # first go through train/valid/test to get max word length
@@ -167,25 +162,17 @@ class Quantizer:
         for ii, ww in enumerate(wordcount.most_common(self.n_words - 1)):
             word = ww[0]
             word2idx[word] = ii + 1
-            idx2word.append(word)
             #if ii < 3: print(word)
 
         print('# of unique characters: %d' % len(charcount))
         for ii, cc in enumerate(charcount.most_common(self.n_chars - 4)):
             char = cc[0]
             char2idx[char] = ii + 4
-            idx2char.append(char)
-            #if ii < 3: print(char)
-
-        #print('Char counts:')
-        #for ii, cc in enumerate(charcount.most_common()):
-            #print(ii, cc[0].encode('utf8'), cc[1])
 
         print('After first pass of data, max word length is:', max_word_l_tmp)
         print('# of tokens (not unique): %d' % split_counts[0] )
         write_log(self.log_dir, 'num_of_tokens.log', split_counts[0])
-        #print('Token count: train %d, val %d, test %d' % (split_counts[0], split_counts[1], split_counts[2]))
-
+        
         # if actual max word length is less than the limit, use that
         max_word_l = min(max_word_l_tmp, max_word_l)
 
@@ -229,6 +216,8 @@ class Quantizer:
             np.save(charfile_split, output_chars)
 
         # save output preprocessed files
+        idx2word = dict([(value, key) for (key, value) in word2idx.items()])
+        idx2char = dict([(value, key) for (key, value) in char2idx.items()])
         print('saving', out_vocabfile)
         np.savez(out_vocabfile, idx2word=idx2word, word2idx=word2idx, idx2char=idx2char, char2idx=char2idx)
         
