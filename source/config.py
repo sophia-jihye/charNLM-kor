@@ -42,7 +42,7 @@ create_dirs([output_base_dir, now_time_str_dir])
 # filepath
 kci_korean_json_filepath = os.path.join(data_dir, 'kci_korean_sentences_510_191230.json')
 log_dir = os.path.join(now_time_str_dir)
-preprocessed_json_filepath = os.path.join(now_time_str_dir, 'outlier_removed.json')
+preprocessed_json_filepath = os.path.join(now_time_str_dir, 'outlier_removed_%d.json')
 whole_units_for_train_txt_filepath = os.path.join(now_time_str_dir, 'whole_units_for_train.txt')
 vocab_filepath = os.path.join(now_time_str_dir, 'vocab.npz')
 tensor_file = os.path.join(now_time_str_dir, 'data')

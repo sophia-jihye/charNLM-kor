@@ -8,6 +8,7 @@ import json
 import pickle
 
 # filepath
+log_dir = parameters.log_dir
 kci_korean_json_filepath = parameters.kci_korean_json_filepath
 preprocessed_json_filepath = parameters.preprocessed_json_filepath
 whole_units_for_train_txt_filepath = parameters.whole_units_for_train_txt_filepath
@@ -49,9 +50,9 @@ def raw2sentences(preprocessor, df):
     df = preprocessor.remove_outlier_sentence(df)
     
     # json으로 저장
-    with open(preprocessed_json_filepath, 'w+') as json_file:
+    with open(preprocessed_json_filepath % len(df), 'w+') as json_file:
         json.dump(df.to_json(orient='records'), json_file)
-        print('Created file:', preprocessed_json_filepath)
+        print('Created file:', preprocessed_json_filepath % len(df))
     return df
 
 def main():
@@ -62,9 +63,8 @@ def main():
     
     df['flattened_sentences'] = df.apply(lambda x: ' '.join(x['sentences']),axis=1)
     stopwords = preprocessor.stopwords(df['flattened_sentences'], min_df)
-    print('# of stopwords = %d \n%s' % (len(stopwords), stopwords))
     
-    # extract nouns
+    print('Extracting nouns..')
     df['nouns'] = df.apply(lambda x: preprocessor.line2words_nouns(x['flattened_sentences'], stopwords, remove_len=remove_len), axis=1)
     
     whole_sentences = preprocessor.flatten_whole_sentences(df, 'nouns')
@@ -84,6 +84,9 @@ def main():
     char_vocab_size = min(n_chars, len(loader.idx2char))
     max_word_l = loader.max_word_l
     print('Word vocab size: %d, Char vocab size: %d, Max word length (incl. padding): %d' % (word_vocab_size, char_vocab_size, max_word_l))
+    
+    log_content = '\n=====\n# of stopwords=%d \n%s\n=====\n# of unique words=%d \n# of unique chars=%d \nmaximum length of a word=%d \n=====\n' % (len(stopwords), str(stopwords), word_vocab_size, char_vocab_size, max_word_l)
+    write_log(log_dir, 'preprocessing_vocab.log', log_content)
 
     print('creating an LSTM-CNN with', num_layers, 'layers')
     model = LSTMCNN(char_vocab_size, char_vec_size, feature_maps, kernels, batch_size, seq_length, max_word_l, batch_norm, highway_layers, num_layers, rnn_size, dropout, word_vocab_size, learning_rate, max_grad_norm)
@@ -92,7 +95,7 @@ def main():
     model.save(model_json_filepath)
     
     Train, Validation, Test = 0, 1, 2
-    model.fit_generator(loader.next_batch(Train), loader.split_sizes[Train], max_epochs, decay_when, learning_rate_decay, save_every, save_epoch_file)
+    model.fit_generator(loader.next_batch(Train), loader.split_sizes[Train], max_epochs, loader.next_batch(Validation), loader.split_sizes[Validation], decay_when, learning_rate_decay, save_every, save_epoch_file)
     model.save_weights(model_weights_h5_filepath, overwrite=True)
     
     # word embedding vectors

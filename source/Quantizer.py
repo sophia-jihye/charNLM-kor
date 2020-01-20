@@ -16,7 +16,7 @@ class Quantizer:
         self.seq_length = parameters.seq_length
         self.n_words = parameters.n_words
         self.n_chars = parameters.n_chars
-        input_objects = [whole_sentences, whole_sentences[:100], whole_sentences[100:200]]
+        input_objects = [whole_sentences, whole_sentences, whole_sentences[:100]]
         vocab_filepath = parameters.vocab_filepath
         tensor_file = parameters.tensor_file
         char_file = parameters.char_file
@@ -167,6 +167,7 @@ class Quantizer:
         print('# of tokens (not unique): %d' % split_counts[0] )
         write_log(self.log_dir, 'num_of_tokens.log', split_counts[0])
         
+        # REAL MAXIMUM WORD LENGTH
         max_word_l = min(max_word_l_tmp, max_word_l)
 
         for split in range(3):  # split = 0 (train), 1 (val), or 2 (test)
