@@ -5,6 +5,7 @@ from config import parameters
 from utils import *
 import pandas as pd
 import json
+import pickle
 
 # filepath
 kci_korean_json_filepath = parameters.kci_korean_json_filepath
@@ -14,6 +15,7 @@ model_param_pkl_filepath = parameters.model_param_pkl_filepath
 model_json_filepath = parameters.model_json_filepath
 model_weights_h5_filepath = parameters.model_weights_h5_filepath
 save_epoch_file = parameters.save_epoch_file
+model_embedding_vectors_pkl_filepath = parameters.model_embedding_vectors_pkl_filepath
 
 n_words = parameters.n_words
 n_chars = parameters.n_chars
@@ -94,6 +96,17 @@ def main():
                         loader.next_batch(Validation), loader.split_sizes[Validation], decay_when, learning_rate_decay, save_every, save_epoch_file)
     model.save_weights(model_weights_h5_filepath, overwrite=True)
     
+    # word embedding vectors
+    embedding_tensor = model.layers[-1].weights[0].value()
+    with tf.Session() as sess:
+        init = tf.global_variables_initializer()
+        sess.run(init)
+        embedding = sess.run(embedding_tensor)
+    embedding = np.transpose(embedding)
+    # save as .pkl
+    with open(model_embedding_vectors_pkl_filepath, mode='wb') as f:
+        pickle.dump(embedding, f)
+    print('Created %s' % model_embedding_vectors_pkl_filepath)
     
 if __name__ == '__main__':
     main()

@@ -21,7 +21,7 @@ parser.add_argument('--max_grad_norm', type=float, default=5, help='normalize gr
 parser.add_argument('--max_epochs', type=int, default=25, help='number of full passes through the training data')
 parser.add_argument('--decay_when', type=float, default=1, help='decay if validation perplexity does not improve by more than this much')
 parser.add_argument('--learning_rate_decay', type=float, default=0.5, help='learning rate decay')
-parser.add_argument('--save_every', type=int, default=5, help='save every n epochs')
+parser.add_argument('--save_every', type=int, default=25, help='save every n epochs')
 args = parser.parse_args()
 
 # User configuration
@@ -51,6 +51,7 @@ model_param_pkl_filepath = os.path.join(now_time_str_dir, 'model_param.pkl')
 model_json_filepath = os.path.join(now_time_str_dir, 'model.json')
 model_weights_h5_filepath = os.path.join(now_time_str_dir, 'model_weights.h5')
 save_epoch_file = os.path.join(now_time_str_dir, 'epoch')
+model_embedding_vectors_pkl_filepath = os.path.join(now_time_str_dir, 'model_embedding_vectors.pkl')
 
 class Parameters:
     def __init__(self):
@@ -95,6 +96,7 @@ class Parameters:
         self.model_json_filepath = model_json_filepath
         self.model_weights_h5_filepath = model_weights_h5_filepath
         self.save_epoch_file = save_epoch_file
+        self.model_embedding_vectors_pkl_filepath = model_embedding_vectors_pkl_filepath
 
     def __str__(self):
         item_strf = ['{} = {}'.format(attribute, value) for attribute, value in self.__dict__.items()]
