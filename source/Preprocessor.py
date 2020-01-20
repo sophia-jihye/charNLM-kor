@@ -3,6 +3,7 @@ from utils import *
 import os
 import re
 import pandas as pd
+import numpy as np
 from konlpy.tag import Okt
 from sklearn.feature_extraction.text import CountVectorizer
 
@@ -11,6 +12,7 @@ doublespace_pattern = re.compile('\s+')
 
 class Preprocessor:
     def __init__(self):
+        self.log_dir = parameters.log_dir
         self.kci_korean_document_length_outlier_short = parameters.kci_korean_document_length_outlier_short
         self.kci_korean_sentence_length_outlier_short = parameters.kci_korean_sentence_length_outlier_short
         self.kci_korean_semtemce_length_outlier_long = parameters.kci_korean_semtemce_length_outlier_long
@@ -54,12 +56,13 @@ class Preprocessor:
         X = vectorizer.fit_transform(corpus)
         stopwords = list(vectorizer.vocabulary_.keys())
         
-        vectorizer = CountVectorizer(min_df=0.0, max_df=1.0)
+        vectorizer = CountVectorizer(min_df=0.0, max_df=1.0, tokenizer=lambda x:self.line2words_nouns(x))
         X = vectorizer.fit_transform(corpus)
         freq = np.sum(X.toarray(), axis=0)
         for word_idx in range(len(vectorizer.vocabulary_.keys())):
             if freq[word_idx] <= 1:
                 stopwords.append(list(vectorizer.vocabulary_.keys())[word_idx])
+        write_log(self.log_dir, 'stopwords.log', stopwords)
         return stopwords
     
     def flatten_whole_sentences(self, df, key_column):
